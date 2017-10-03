@@ -6,12 +6,12 @@ import corner
 from epm.compute_epm import dist2distmodulus
 #- use EMCEE package to perform cosmological workout: http://dfm.io/emcee/current/user/line/
 
-def read_data():
+def read_data(datafile):
     from epm.compute_epm import dist2distmodulus
     import numpy as np
     from epm.util import helio_to_cmb
 
-    data=np.loadtxt('distance.txt',unpack=True)
+    data=np.loadtxt(datafile,unpack=True)
     z=data[2]
     d=data[4]
     derr=data[5]
@@ -26,7 +26,7 @@ def read_data():
     return zcmb,dm,edm
 
 class cosmoH0(object):
-    #- solve for omega matter
+    #- solve for H0
 
     def __init__(self,seed=1234):
         self.name='CH0'
@@ -45,7 +45,7 @@ class cosmoH0(object):
     def lnlike(self,theta,z,dm,edm):
         H0,lnsig=theta
         thismodel=self.model(z,H0)
-        inv_sigma2=1.0/(edm**2+np.exp(2*lnsig)) #- should not multiply by model as not a fraction.
+        inv_sigma2=1.0/(edm**2+np.exp(2*lnsig)) #- should not multiply by model since not a fraction.
         return -0.5*(np.sum((dm-thismodel)**2*inv_sigma2 - np.log(inv_sigma2)))
 
     def optimize_like(self,z,dm,edm):
@@ -113,7 +113,7 @@ class cosmoH0(object):
 
 
 class cosmoOm(object):
-    #- get Omegam, sigma
+    #- get Omegam
     def __init__(self,seed=1234):
         self.name='COm'
         self.seed=seed
@@ -199,7 +199,7 @@ class cosmoOm(object):
         
 
 class cosmoH0_Om(object):
-    #- solve for omega matter
+    #- solve for H0 and omegaM
 
     def __init__(self,seed=1234):
         self.name='CH0_Om'
@@ -286,69 +286,3 @@ class cosmoH0_Om(object):
         fig1.savefig("mu_z_corner_param_{}.eps".format(self.name))
         plt.show()
 
-"""
-def lnlike(theta,x,y,yerr): #- Log likelihood. for a linear y=mx+b
-    m,b,lnf=theta #- fraction f
-    model=m*x+b
-    inv_sigma2=1.0/(yerr**2+model**2*np.exp(2*lnf))
-    return -0.5*(np.sum((y-model)**2*inv_sigma2 - np.log(inv_sigma2)))
-
-
-def optimize_like(x,y,yerr):
-    from scipy import optimize as op
-    #- first get the ls solution for m,b,lnf
-    fit=lambda x,m,b: m*x+b
-    popt,pcov=op.curve_fit(fit,x,y)
-    m=popt[0]
-    b=popt[1]
-    f=0.4
-    nll=lambda *args: -lnlike(*args)
-    result=op.minimize(nll,[m,b,np.log(f)],args=(x,y,yerr))
-    m_ml,b_ml,lnf_ml=result["x"]
-    return result
-    
-def lnprior(theta):
-    m, b, lnf = theta
-    if 35.0 < m < 45 and 30 < b < 40.0 and -10.0 < lnf < 1.0:
-        return 0.0
-    return -np.inf
-
-def lnprob(theta, x, y, yerr):
-    lp = lnprior(theta)
-    if not np.isfinite(lp):
-        return -np.inf
-    return lp + lnlike(theta, x, y, yerr)
-
-
-def run_emcee(x,y,yerr,save=True):
-    import corner
-    import emcee
-    import matplotlib.pyplot as plt
-    ndim, nwalkers = 3, 5000
-    result=optimize_like(np.log10(x),y,yerr)
-    print(result["x"])
-    ml_m=result['x'][0]
-    ml_b=result['x'][1]
-    ml_lnf=result['x'][2]
-    rst=np.random.RandomState(1234)
-    pos = [result["x"] + 1.0e-1*rst.randn(ndim) for i in range(nwalkers)]
-    sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, args=(x, y, yerr))
-    sampler.run_mcmc(pos, 500)
-    samples=sampler.chain[:,50:,:].reshape((-1,ndim))
-    if save:
-        fig1 = corner.corner(samples, truths=[ml_m,ml_b,ml_lnf],labels=["$m$", "$b$", "$\ln\,f$"],quantiles=[0.16,0.5,0.84],show_titles=True,title_kwargs={"fontsize": 14}) 
-        fig1.savefig("mu_z_corner_param.eps")
-        zz=np.array([0.0001,0.1])
-        fig2=plt.figure()
-        ax=fig2.add_subplot(111)
-        for m,b,lnf in samples[np.random.randint(len(samples),size=100)]:
-            ax.plot(zz,m*np.log10(zz)+b,color="gray",alpha=0.2)
-        ax.plot(zz,ml_m*np.log10(zz)+ml_b,color="k",lw=2, alpha=0.8)
-        ax.errorbar(x,y,yerr=yerr,fmt="ro",ls='None')
-        #ax.set_yscale("log")
-        ax.set_ylim(28,40)
-        ax.set_xlim(0.001,0.1)
-        ax.set_xscale('log')
-        fig2.savefig("mu_vs_z_sample.eps")
-    return samples
-"""
