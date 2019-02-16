@@ -14,3 +14,18 @@ def dilution_factor(temp,etemp=None,bandset='BVI'):
         raise ValueError("No other combinations implemented")
     return xi,exi
 
+def filter_response(responsefile=None):
+     
+    #- load rotse and sdss filters
+    
+    filters=speclite.filters.load_filters(responsefile,'sdss2010-*')
+    #rotse=speclite.filters.load_filters('./rotse_response.ecsv')       
+
+    speclite.filters.plot_filters(filters, wavelength_limits=(3000,11000))
+    #speclite.filters.plot_filters(sdss,wavelength_limits=(3000,11000))
+
+    plt.savefig("filter_response.png")
+
+def rotse_response():
+    rotse_resp=speclite.filters.load_filter('../../data/rotse_response_normalized.ecsv')
+    return rotse_resp
