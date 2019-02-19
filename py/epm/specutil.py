@@ -85,3 +85,51 @@ def get_k_corrections(specpath,ebv=0,eebv=0,t0=0,zin=None,ezin=0,zout=None,ezout
         np.savetxt('kcorr_{}_z_{}.txt'.format(snname,zout),np.c_[epochs[tt],kcorr[tt],ekcorr[tt]],fmt='%.4f')
 
     return kcorr,ekcorr
+
+
+def gaussprocess_sample(path,epoch=10.,snkcorrfile=None,snname='this-SN'):
+    files=glob.glob(path+'/kcorr_*')
+    ep=[]
+    kcorr=[]
+    ekcorr=[]
+    for ff in files:
+        thisep,thiskcorr,thisekcorr=np.loadtxt(ff,unpack=True)
+        sel=np.where(thisep<100)
+        thisep=thisep[sel]
+        thiskcorr=thiskcorr[sel]
+        thisekcorr=thisekcorr[sel]
+        ep=np.concatenate([ep,thisep])
+        kcorr=np.concatenate([kcorr,thiskcorr])
+        ekcorr=np.concatenate([ekcorr,thisekcorr])
+
+    tt=np.argsort(ep)
+    ep=ep[tt]
+    kcorr=kcorr[tt]
+    ekcorr=np.sqrt(ekcorr[tt]**2+0.01**2)
+    gp1=GaussianProcess(corr='squared_exponential',theta0=0.05, nugget= (ekcorr/kcorr)**2, random_state=0)
+    gp1.fit(ep[:,None],kcorr)
+    nep=np.arange(5,100)
+    fit1,MSE1=gp1.predict(nep[:,None],eval_MSE=True)
+    fiterr1=np.sqrt(MSE1)
+    #- plot
+    #plt.plot(ep,kcorr,'go',label='K-correction from spectra')
+    plt.errorbar(ep,kcorr,yerr=ekcorr,color='g',marker='o',capsize=0.1,ls='None',label='K-correction from sample spectra')
+    plt.plot(nep,fit1,'-',color='black',label='GP Regression model')
+    plt.fill_between(nep,fit1-2*fiterr1,fit1+2*fiterr1,color='gray',alpha=0.3)
+
+    if snkcorrfile is not None:
+        snep,snkcorr,snekcorr=np.loadtxt(snkcorrfile,unpack=True)
+        snekcorr=np.sqrt(snekcorr**2+0.01**2)
+        plt.errorbar(snep,snkcorr,yerr=snekcorr,color='r',marker='o',capsize=0.,ls='None',label='K-correction from {} spectra'.format(snname))
+    plt.legend(numpoints=1,loc=4,fontsize=22)
+    plt.xlabel(r'${\rm Days\ since\ explosion}$',fontsize=22)
+    plt.ylabel(r'$K-{\rm correction\ [V-mag]}$',fontsize=22)
+    plt.tick_params(axis='both',labelsize=18)
+    plt.ylim(-0.1,0.06)
+    plt.tight_layout()
+    plt.savefig('Kcorrection_{}.eps'.format(snname))
+    plt.show()
+    value,value_var=gp1.predict(epoch[:,None],eval_MSE=True)
+    np.savetxt('kcorrection_at_rotseep.dat',np.c_[epoch,value,np.sqrt(value_var)],fmt='%.4f')
+    
+    return value, np.sqrt(value_var)
