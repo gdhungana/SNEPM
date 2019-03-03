@@ -55,7 +55,23 @@ def mag_flux_density(mag,emag,band,system='Vega'):
             f_lambda = 10**(-0.4*(mag+21.1+3.760))
         if band == 'K':      
             f_lambda = 10**(-0.4*(mag+21.1+4.906))
-
+    #- AB system:
+    if system == 'AB':
+        """
+        #- for swift filters:
+        #- Poole et al. 2008, using this can also calibrate u to Johnson's U
+        
+        if band == 'uvw2':    
+            f_lambda = 10**(-0.4*(mag+19.11))
+        if band == 'uvw1':    
+            f_lambda = 10**(-0.4*(mag+18.95))
+            flux=f_lambda*fwhm
+        """
+        if band in ['U','B','V','R','I']:
+            band='bessell-'+band
+            #filt=speclite.filters.load_filter(band)
+            #wavelength=filt.wavelength
+            f_lambda=ABspectrum(wave,magnitude=mag) # f_lambda at filter effective wavelength
     ef_lambda=emag/2.5*f_lambda*np.log(10.0)
     return wave,f_lambda,ef_lambda
 
