@@ -75,5 +75,24 @@ def mag_flux_density(mag,emag,band,system='Vega'):
     ef_lambda=emag/2.5*f_lambda*np.log(10.0)
     return wave,f_lambda,ef_lambda
 
+def mag_flux(mag,emag,band,system='Vega'): #- mag to flux conversion given a band
+
+    filt=speclite.filters.load_filter('bessell-'+band)
+    wavelength=filt.wavelength
+    filtconv=speclite.filters.FilterConvolution(filt,wavelength,photon_weighted=False)
+
+    if system=='Vega':    
+        wave,f_lambda,ef_lambda=mag_flux_density(mag,emag,band,system=system)
+        spec=np.ones_like(wavelength)*f_lambda #- f_lambda is averaged
+        flux=filtconv(spec) #- integrated flux
+         
+    if system=='AB':
+        wave=filt.effective_wavelength
+        spec=ABspectrum(wavelength,magnitude=mag)
+        flux=filtconv(spec) #- integrated flux
+
+    eflux = emag/2.5*flux*np.log(10.0)
+
+    return wave,flux,eflux
 
 
