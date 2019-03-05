@@ -111,4 +111,75 @@ def count_bins(wave,band):
     nbins=len(wavelength)
     return nbins
 
+def ABspectrum(wavelength,magnitude=0.):
+    """
+    wavelength in Angstrom
+    """
+    #- https://en.wikipedia.org/wiki/AB_magnitude
+    f_lambda= 10 ** (-0.4 * magnitude) * _abconst / wavelength ** 2
+    return f_lambda
+
+
+
+def find_ABmag(temp,band="bessell-R",normalization=1.):
+    #- find the band magnitude of BB at the given temperature using Planck function
+
+    filt=speclite.filters.load_filter(band)
+    wave=filt.wavelength
+    bb=planck(wave,temp,norm=normalization)
+    mag=filt.get_ab_magnitude(wavelength=wave,spectrum=bbspec)
+    return mag
+
+def vega_to_AB(vegamag,band='R'):
+    # Following Blanton 2007; http://www.astronomy.ohio-state.edu/~martini/usefuldata.html
+
+    if band=='U':
+        ABmag = vegamag+0.79
+    if band=='B':
+        ABmag = vegamag-0.09
+    if band=='V':
+        ABmag = vegamag+0.02
+    if band=='R':
+        ABmag = vegamag+0.21
+    if band=='I':
+        ABmag = vegamag+0.45
+    if band=='J':
+        ABmag = vegamag+0.91
+    if band=='H':
+        ABmag = vegamag+1.39
+    if band=='K':
+        ABmag = vegamag+1.85
+    if band=='u':
+        ABmag = vegamag+0.91
+    if band=='g':
+        ABmag = vegamag-0.08
+    if band=='r':
+        ABmag = vegamag+0.16
+    if band=='i':
+        ABmag = vegamag+0.37
+    if band=='z':
+        ABmag = vegamag+0.54
+
+    return ABmag
+
+def restframe_spec(wave,z):
+    restwave=wave/(1+z)
+    return restwave
+
+
+def specphot(wave,spec,band,z=None):
+    """
+    find AB magnitude from the spectrum
+    if z is given, find magnitude in rest frame
+    """
+
+    if z is not None:
+        wave=wave/(1+z)
+        
+    filt=speclite.filters.load_filter(band)
+    #wave=filt.wavelength
+    #filtconv=speclite.filters.FilterConvolution(filt,wavelength,photon_weighted=False)
+    #flux=filtconv(spec)
+    mag=filt.get_ab_magnitude(wavelength=wave,spectrum=spec)
+    return mag
 
