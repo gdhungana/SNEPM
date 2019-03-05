@@ -95,4 +95,20 @@ def mag_flux(mag,emag,band,system='Vega'): #- mag to flux conversion given a ban
 
     return wave,flux,eflux
 
+def effwavelength(band):
+    wavemap={'U': 3618.4, 'B': 4442.25, 'V': 5536.15, 'R': 6648.33, 'I': 8086.40, 'J': 12200, 'H': 16300, 'K': 21900,
+              'uvw2': 1991., 'uvw1': 2468.}
+    fwhmmap={'U': 340., 'B': 780., 'V': 990., 'R': 1065., 'I': 2892}
+               
+    return wavemap[band],fwhmmap[band]
+
+def count_bins(wave,band):
+    #- number of bins in the spectrum within the filter range
+    filt=speclite.filters.load_filter('bessell-'+band)
+    wavelength=filt.wavelength
+    bins=np.logical_and(wave>=np.min(wavelength),wave<=np.max(wavelength))
+    #nbins=len(wave[bins])
+    nbins=len(wavelength)
+    return nbins
+
 
