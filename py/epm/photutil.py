@@ -183,3 +183,11 @@ def specphot(wave,spec,band,z=None):
     mag=filt.get_ab_magnitude(wavelength=wave,spectrum=spec)
     return mag
 
+def calibrotse2V(rmag,remag,temp):
+    print rmag
+    print temp
+    model=-7.157+7.2346*(1-np.exp(-7.2579e-4*temp))
+    rms=0.01
+    mag=rmag-model
+    emag=(remag**2+0.01**2)**0.5
+    return mag,emag
