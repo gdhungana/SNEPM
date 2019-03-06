@@ -191,3 +191,50 @@ def calibrotse2V(rmag,remag,temp):
     mag=rmag-model
     emag=(remag**2+0.01**2)**0.5
     return mag,emag
+
+def plot_lc(lcfile,A_v=0.,kcorrfile=None,snname='SN', mjd=0.,tempfile=None):
+    #- plot light curves, mjd is not used in computation, only for legend 
+    fig=plt.figure()
+    ax=fig.add_subplot(111)
+
+    #- load lc
+    ep,mag,emag=np.loadtxt(lcfile,unpack=True)
+    mag=mag-A_v #- extinction if not already done
+
+    if kcorrfile is not None:
+        kep,kcorr,ekcorr=np.loadtxt(kcorrfile,unpack=True)
+        np.alltrue(ep==kep) #- make sure all epochs match
+        mag=mag-kcorr
+        emag=np.sqrt(emag**2+ekcorr**2)
+
+    k=np.where(ep<400.)
+
+    ep=ep[k]
+    mag=mag[k]
+    emag=emag[k]
+
+    if tempfile is not None:
+        from epm.temperature import sample_temp
+        eptemp,meastemp,measetemp=np.loadtxt(tempfile,unpack=True)
+        temp,etemp=sample_temp(ep,eptemp,meastemp,measetemp)
+        mag,emag=calibrotse2V(mag,emag,temp)
+    
+    ylim=(np.max(mag)+1,np.min(mag)-1)
+    ax.errorbar(ep,mag,yerr=emag,color='black',ls='None', marker='o', capsize=0)
+    from matplotlib.font_manager import FontProperties
+    font=FontProperties()
+    font.set_style('italic')
+    font.set_weight('bold')
+    ax.text(0.7,0.95,snname,ha='left', va='top', transform=ax.transAxes,fontproperties=font, fontsize=22,alpha=2)
+    ax.set_ylabel(r'${\rm V\ Magnitude}$',fontsize=24)
+    ax.set_xlabel(r'${\rm Phase\ since\ MJD\ %.1f\ [days]} $'%mjd,fontsize=24)
+    ax.axvline(0,linestyle='dashed',lw=2.)
+    ax.set_ylim(ylim)
+    ax.set_xlim(-5,np.max(ep)+5)
+    ax.tick_params(axis='both',labelsize=16)
+    plt.tight_layout()
+    plt.savefig('sn{}_lightcurve.eps'.format(snname[-4:]))
+    plt.show()
+    return
+
+
