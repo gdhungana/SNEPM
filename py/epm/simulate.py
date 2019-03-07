@@ -21,10 +21,6 @@ def simulate_bb(n=100,seed=1234,filt='R'):
 
     for ii in range(len(temp)):
         bb1,ebb1=get_bbflux(wave,temp[ii],500.)
-        #print bb1
-        #print wave
-        #rotsefl[ii]=rotse_resp.convolve_with_array(wavelength=wave,values=bb1,interpolate=True)
-        #bandfl[ii]=band_resp.convolve_with_array(wavelength=wave,values=bb1)
         rotsem[ii]=rotse_resp.get_ab_magnitude(wavelength=wave,spectrum=bb1)
         bandm[ii]=band_resp.get_ab_magnitude(wavelength=wave,spectrum=bb1)
         #bandem=band_resp.get_ab_magnitude(wavelength=wave,spectrum=ebb1)
@@ -41,7 +37,5 @@ def simulate_bb(n=100,seed=1234,filt='R'):
         rotsefl[ii]=filtconv(rspec)
         bandfl[ii]=filtconv(bandspec)
 
-    #rotseem = rotseefl* 2.5/(rotsefl*np.log(10.0))
-    #bandem = bandefl*2.5/(bandfl*np.log(10.0))
     return temp,rotsem, bandm #, rotseem, bandm, bandem
 
